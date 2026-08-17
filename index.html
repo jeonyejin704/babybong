@@ -67,6 +67,15 @@
     color:var(--ink); padding:8px 13px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:7px}
   .btn:hover{border-color:var(--accent); color:var(--accent-ink)}
   .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .btn.primary:hover{filter:brightness(1.05); color:#fff}
+  .syncpill{font-size:.75rem; font-weight:700; padding:6px 11px; border-radius:20px; display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface-3); color:var(--ink-soft); border:1px solid var(--line)}
+  .syncpill .d{width:8px; height:8px; border-radius:50%; background:var(--ink-faint)}
+  .syncpill.on{background:var(--good-soft); color:var(--accent-ink); border-color:transparent}
+  .syncpill.on .d{background:var(--good)}
+  .syncpill.err{background:var(--crit-soft); color:var(--crit)}
+  .syncpill.err .d{background:var(--crit)}
 
   /* ---------- 상태 스트립 ---------- */
   .status{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -83,13 +92,13 @@
   .plabels{display:flex; justify-content:space-between; font-size:.72rem; color:var(--ink-soft); margin-top:6px}
   .plabels b{color:var(--ink)}
   .lmp-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px; font-size:.82rem; color:var(--ink-soft)}
-  input[type=date],input[type=number]{font:inherit; background:var(--surface-2); border:1px solid var(--line-strong);
+  input[type=date],input[type=number],input[type=text],textarea{font:inherit; background:var(--surface-2); border:1px solid var(--line-strong);
     color:var(--ink); border-radius:8px; padding:6px 9px}
-  input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
 
   /* ---------- 섹션 ---------- */
   section{margin-top:30px}
-  .sec-head{display:flex; align-items:baseline; gap:10px; margin-bottom:6px}
+  .sec-head{display:flex; align-items:baseline; gap:10px; margin-bottom:6px; flex-wrap:wrap}
   .sec-head h2{font-size:1.12rem; margin:0; font-weight:800; letter-spacing:-.02em}
   .sec-head .tag{font-size:.72rem; color:var(--ink-faint)}
   .sec-sub{color:var(--ink-soft); font-size:.86rem; margin:0 0 16px}
@@ -163,12 +172,29 @@
   .bs.net .v{color:var(--coral)}
 
   /* 메모 */
-  textarea{width:100%; min-height:120px; font:inherit; font-size:.9rem; background:var(--surface); color:var(--ink);
-    border:1px solid var(--line-strong); border-radius:var(--radius); padding:14px 16px; resize:vertical; box-shadow:var(--shadow)}
-  textarea:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+  #memoBox{width:100%; min-height:120px; font-size:.9rem; resize:vertical; box-shadow:var(--shadow); background:var(--surface); border-radius:var(--radius); padding:14px 16px}
 
   .note{font-size:.78rem; color:var(--ink-faint); margin-top:10px; line-height:1.6}
   footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line); font-size:.78rem; color:var(--ink-faint)}
+
+  /* ---------- 동기화 설정 모달 ---------- */
+  .overlay{position:fixed; inset:0; background:rgba(30,25,18,.5); display:none; align-items:center; justify-content:center; padding:18px; z-index:50}
+  .overlay.open{display:flex}
+  .modal{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.3);
+    max-width:560px; width:100%; max-height:90vh; overflow-y:auto; padding:24px}
+  .modal h3{margin:0 0 4px; font-size:1.15rem}
+  .modal .lead{color:var(--ink-soft); font-size:.86rem; margin:0 0 16px}
+  .modal label{display:block; font-weight:700; font-size:.82rem; margin:14px 0 5px}
+  .modal input[type=text], .modal textarea{width:100%}
+  .modal textarea{min-height:120px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.78rem}
+  .steps{background:var(--surface-2); border-radius:12px; padding:14px 16px 14px 34px; margin:6px 0 4px; font-size:.82rem; color:var(--ink-soft)}
+  .steps li{margin:5px 0}
+  .steps a{color:var(--accent-ink); font-weight:600}
+  .modal-actions{display:flex; gap:8px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap}
+  .modal .msg{font-size:.82rem; margin-top:10px; padding:8px 12px; border-radius:8px; display:none}
+  .modal .msg.show{display:block}
+  .modal .msg.ok{background:var(--good-soft); color:var(--accent-ink)}
+  .modal .msg.bad{background:var(--crit-soft); color:var(--crit)}
 
   @media (max-width:720px){
     .status-grid{grid-template-columns:repeat(2,1fr)}
@@ -191,6 +217,8 @@
       </div>
     </div>
     <div class="top-actions">
+      <span class="syncpill" id="syncPill"><span class="d"></span><span id="syncTxt">이 기기 저장</span></span>
+      <button class="btn primary" id="syncBtn" type="button">☁️ 함께 관리</button>
       <button class="btn" id="themeBtn" type="button">🌗 테마</button>
       <button class="btn" id="resetBtn" type="button">↺ 초기화</button>
     </div>
@@ -295,8 +323,33 @@
 
   <footer>
     <p><b>안내</b> · 이 대시보드는 정보 정리를 돕는 초안이며 의료·법률·재정 자문이 아닙니다. 건강 관련 결정은 담당 의료진과, 제도·금액은 정부24·복지로·아이사랑·관할 보건소/주민센터에서 최신 기준으로 확인하세요.</p>
-    <p style="margin-top:6px">모든 입력(체크·예산·메모·예정일)은 이 브라우저에만 저장됩니다. 서버로 전송되지 않아요.</p>
+    <p style="margin-top:6px" id="storageNote">지금은 <b>이 기기(브라우저)에만</b> 저장 중입니다. 남편과 실시간으로 함께 관리하려면 우측 상단 <b>☁️ 함께 관리</b>를 눌러 클라우드 동기화를 켜세요.</p>
   </footer>
+</div>
+
+<!-- 동기화 설정 모달 -->
+<div class="overlay" id="syncOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+    <h3 id="syncTitle">☁️ 남편과 함께 관리 (클라우드 동기화)</h3>
+    <p class="lead">두 분이 <b>같은 Firebase 설정</b>과 <b>같은 방 이름</b>으로 접속하면 체크·예산·메모가 실시간으로 공유돼요. 최초 1회만 아래를 설정하면 됩니다. (Firebase는 구글의 무료 서비스, 카드 등록 불필요)</p>
+    <ol class="steps">
+      <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> 접속 → <b>프로젝트 만들기</b></li>
+      <li>왼쪽 <b>빌드 → Firestore Database → 데이터베이스 만들기</b> (위치 asia-northeast3 서울)</li>
+      <li><b>빌드 → Authentication → 시작하기 → 익명(Anonymous)</b> 사용 설정</li>
+      <li>프로젝트 개요 옆 <b>⚙️ → 프로젝트 설정 → 내 앱 → 웹(&lt;/&gt;)</b> 추가 → 나오는 <code>firebaseConfig</code> 중괄호 <code>{ … }</code> 부분을 복사해 아래에 붙여넣기</li>
+      <li>남편에게는 이 페이지 주소 + 같은 설정/방 이름만 알려주면 끝!</li>
+    </ol>
+    <label for="cfgInput">Firebase 설정 (config 객체 붙여넣기)</label>
+    <textarea id="cfgInput" placeholder='{ "apiKey": "AIza...", "authDomain": "xxx.firebaseapp.com", "projectId": "xxx", ... }'></textarea>
+    <label for="roomInput">방 이름 (둘만 아는 긴 암호처럼 — 예: yejin-nampyeon-2027-baby)</label>
+    <input type="text" id="roomInput" placeholder="추측하기 어려운 문구로 정하세요" />
+    <div class="msg" id="syncMsg"></div>
+    <div class="modal-actions">
+      <button class="btn" id="syncDisconnect" type="button" style="margin-right:auto; display:none">연결 해제(이 기기 저장으로)</button>
+      <button class="btn" id="syncCancel" type="button">닫기</button>
+      <button class="btn primary" id="syncConnect" type="button">연결하고 동기화 켜기</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -306,7 +359,7 @@
   var KEY = "babybong_v1";
   var store = {};
   try{ store = JSON.parse(LS.getItem(KEY) || "{}"); }catch(e){ store = {}; }
-  function save(){ try{ LS.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+  function saveLocal(){ try{ LS.setItem(KEY, JSON.stringify(store)); }catch(e){} }
 
   /* ---------- 데이터 ---------- */
   var benefits = [
@@ -402,100 +455,69 @@
   function el(html){ var d=document.createElement("div"); d.innerHTML=html.trim(); return d.firstChild; }
   function fmt(n){ return (n||0).toLocaleString("ko-KR"); }
 
-  // 혜택 카드
-  var phMap={early:"초기",mid:"중기",late:"후기",birth:"출산·육아"};
   var benCards=document.getElementById("benCards");
   benefits.forEach(function(b){
-    var checked = store["chk_"+b.id] ? " checked" : "";
-    var cls = store["chk_"+b.id] ? "card checked" : "card";
     var pills = '<span class="pill when">'+(b.when||"")+'</span>';
     if(b.money) pills+='<span class="pill money">'+b.money+'</span>';
     if(b.where) pills+='<span class="pill where">'+b.where+'</span>';
-    var c = el('<div class="'+cls+'" data-ph="'+b.ph+'">'+
-      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+b.id+'"'+checked+'>'+
+    benCards.appendChild(el('<div class="card" data-ph="'+b.ph+'">'+
+      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+b.id+'">'+
       '<div><h3>'+b.t+'</h3></div></div>'+
-      '<p>'+b.d+'</p><div class="meta">'+pills+'</div></div>');
-    benCards.appendChild(c);
+      '<p>'+b.d+'</p><div class="meta">'+pills+'</div></div>'));
   });
 
-  // 검사 카드
   var examCards=document.getElementById("examCards");
   exams.forEach(function(e){
-    var checked = store["chk_"+e.id] ? " checked" : "";
-    var cls = store["chk_"+e.id] ? "card checked" : "card";
-    var c = el('<div class="'+cls+'">'+
-      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+e.id+'"'+checked+'>'+
+    examCards.appendChild(el('<div class="card">'+
+      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+e.id+'">'+
       '<div><h3>'+e.t+'</h3></div></div>'+
-      '<p>'+e.d+'</p><div class="meta"><span class="pill when">'+e.when+'</span></div></div>');
-    examCards.appendChild(c);
+      '<p>'+e.d+'</p><div class="meta"><span class="pill when">'+e.when+'</span></div></div>'));
   });
 
-  // 영양제
   var suppList=document.getElementById("suppList");
   supps.forEach(function(s){
     suppList.appendChild(el('<div class="s"><div class="n">'+s.n+'</div><div class="t">'+s.t+'</div><div class="why">'+s.why+'</div></div>'));
   });
 
-  // 먹거리
   function foodLi(f){ return '<li><span class="lead">'+f.l+'</span><small>'+f.s+'</small></li>'; }
   document.getElementById("foodGood").innerHTML = foodGood.map(foodLi).join("");
   document.getElementById("foodBad").innerHTML = foodBad.map(foodLi).join("");
 
-  // 부부
   var coupleCards=document.getElementById("coupleCards");
   couple.forEach(function(e){
-    var checked = store["chk_"+e.id] ? " checked" : "";
-    var cls = store["chk_"+e.id] ? "card checked" : "card";
-    var c = el('<div class="'+cls+'">'+
-      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+e.id+'"'+checked+'>'+
+    coupleCards.appendChild(el('<div class="card">'+
+      '<div class="card-top"><input type="checkbox" class="chk" id="chk_'+e.id+'">'+
       '<div><h3>'+e.t+'</h3></div></div>'+
-      '<p>'+e.d+'</p></div>');
-    coupleCards.appendChild(c);
+      '<p>'+e.d+'</p></div>'));
   });
 
-  // 체크박스 공통 저장
-  document.querySelectorAll(".chk").forEach(function(cb){
-    cb.addEventListener("change", function(){
-      store[cb.id] = cb.checked ? 1 : 0;
-      var card = cb.closest(".card");
-      if(card) card.classList.toggle("checked", cb.checked);
-      save();
-    });
-  });
-
-  // 탭 필터
-  var benTabs=document.getElementById("benTabs");
-  benTabs.addEventListener("click", function(ev){
-    var t = ev.target.closest(".tab"); if(!t) return;
-    benTabs.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected","false"); });
-    t.setAttribute("aria-selected","true");
-    var f = t.getAttribute("data-f");
-    benCards.querySelectorAll(".card").forEach(function(card){
-      card.classList.toggle("hidden", !(f==="all" || card.getAttribute("data-ph")===f));
-    });
-  });
-
-  /* ---------- 예산 ---------- */
+  /* 예산 행 */
   var body=document.getElementById("budgetBody");
   budgetRows.forEach(function(r){
     if(r.grp){ body.appendChild(el('<tr class="grp-row"><td colspan="4">'+r.grp+'</td></tr>')); return; }
-    var plan = store["bp_"+r.id] != null ? store["bp_"+r.id] : r.plan;
-    var real = store["br_"+r.id] != null ? store["br_"+r.id] : "";
-    var memo = store["bm_"+r.id] != null ? store["bm_"+r.id] : (r.memo||"");
-    var tr = el('<tr>'+
+    body.appendChild(el('<tr>'+
       '<td>'+r.t+'</td>'+
-      '<td class="amt"><input class="cell-in num" type="number" min="0" step="10000" data-k="bp_'+r.id+'" value="'+plan+'"></td>'+
-      '<td class="amt"><input class="cell-in num" type="number" min="0" step="10000" data-k="br_'+r.id+'" value="'+real+'" placeholder="0"></td>'+
-      '<td><input class="memo-in" type="text" data-k="bm_'+r.id+'" value="'+String(memo).replace(/"/g,'&quot;')+'" style="width:100%;min-width:120px;font:inherit;background:transparent;border:none;color:var(--ink-soft)"></td>'+
-      '</tr>');
-    body.appendChild(tr);
+      '<td class="amt"><input class="cell-in num" type="number" min="0" step="10000" data-k="bp_'+r.id+'"></td>'+
+      '<td class="amt"><input class="cell-in num" type="number" min="0" step="10000" data-k="br_'+r.id+'" placeholder="0"></td>'+
+      '<td><input type="text" data-k="bm_'+r.id+'" style="width:100%;min-width:120px;background:transparent;border:none;color:var(--ink-soft)"></td>'+
+      '</tr>'));
   });
 
+  // 기본값 시딩(최초 1회)
+  budgetRows.forEach(function(r){ if(!r.grp && store["bp_"+r.id]==null){ store["bp_"+r.id]=r.plan; if(r.memo) store["bm_"+r.id]=r.memo; } });
+  supportRows.forEach(function(s){ if(store["sp_"+s.id]==null){ store["sp_"+s.id]=s.plan; } });
+
+  var memo=document.getElementById("memoBox");
+  var lmpInput=document.getElementById("lmp");
+  function defaultLMP(){ var d=new Date(); d.setDate(d.getDate()-35); return d.toISOString().slice(0,10); }
+  if(store.lmp==null) store.lmp = defaultLMP();
+
+  /* ---------- 계산 ---------- */
   function recalc(){
     var plan=0, real=0, support=0;
     budgetRows.forEach(function(r){
       if(r.grp) return;
-      var p = store["bp_"+r.id] != null ? +store["bp_"+r.id] : r.plan;
+      var p = store["bp_"+r.id] != null ? +store["bp_"+r.id] : (r.plan||0);
       var rr = store["br_"+r.id] != null && store["br_"+r.id] !== "" ? +store["br_"+r.id] : 0;
       plan += p||0; real += rr||0;
     });
@@ -509,38 +531,14 @@
     document.getElementById("bsSupport").textContent = "-"+fmt(support)+"원";
     document.getElementById("bsNet").textContent = fmt(plan-support)+"원";
   }
-  body.addEventListener("input", function(ev){
-    var i=ev.target; var k=i.getAttribute("data-k"); if(!k) return;
-    store[k] = i.type==="number" ? (i.value===""?"":+i.value) : i.value;
-    save(); recalc();
-  });
-  // 정부지원 기본값 저장(초기 1회)
-  supportRows.forEach(function(s){ if(store["sp_"+s.id]==null){ store["sp_"+s.id]=s.plan; } });
-  recalc();
-
-  /* ---------- 메모 ---------- */
-  var memo=document.getElementById("memoBox");
-  memo.value = store.memo || "";
-  memo.addEventListener("input", function(){ store.memo = memo.value; save(); });
-
-  /* ---------- 주차/예정일 계산 ---------- */
-  var lmpInput=document.getElementById("lmp");
-  function defaultLMP(){
-    // 오늘 기준 임신 5주차 가정 (완료 4주 → 28일 전)
-    var d=new Date(); d.setDate(d.getDate()-35); return d.toISOString().slice(0,10);
-  }
-  lmpInput.value = store.lmp || defaultLMP();
-
   function calc(){
-    var lmp = new Date(lmpInput.value+"T00:00:00");
-    if(isNaN(lmp)){ return; }
+    var lmp = new Date((store.lmp||"")+"T00:00:00");
+    if(isNaN(lmp)) return;
     var today = new Date(); today.setHours(0,0,0,0);
     var days = Math.floor((today - lmp)/86400000);
-    var week = Math.floor(days/7);
-    var dayIn = days%7;
+    var week = Math.floor(days/7); var dayIn = days%7;
     var edd = new Date(lmp.getTime() + 280*86400000);
     var dday = Math.ceil((edd - today)/86400000);
-
     document.getElementById("stWeek").innerHTML = (week>=0?week:0)+'<small>주 '+ (dayIn>=0?dayIn:0) +'일</small>';
     var tri = week<14?"초기":week<28?"중기":"후기";
     var triN = week<14?"1":week<28?"2":"3";
@@ -549,14 +547,56 @@
     document.getElementById("stEdd").textContent = edd.toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric"});
     document.getElementById("stEddSub").textContent = "±초음파 기준 확정";
     document.getElementById("stDday").textContent = dday>0? "D-"+dday : (dday===0?"D-Day":"D+"+(-dday));
-
-    // progress bar (40주 기준, 초기/중기/후기 3구간)
     var pct = Math.max(0, Math.min(100, (week/40)*100));
-    var pbar=document.getElementById("pbar");
-    pbar.innerHTML = '<div class="pseg done" style="width:'+pct+'%"></div><div class="pseg" style="width:'+(100-pct)+'%;background:var(--surface-3)"></div>';
+    document.getElementById("pbar").innerHTML = '<div class="pseg done" style="width:'+pct+'%"></div><div class="pseg" style="width:'+(100-pct)+'%;background:var(--surface-3)"></div>';
   }
-  lmpInput.addEventListener("change", function(){ store.lmp=lmpInput.value; save(); calc(); });
-  calc();
+
+  /* ---------- store → DOM 반영 ---------- */
+  function applyStore(){
+    document.querySelectorAll(".chk").forEach(function(cb){
+      if(document.activeElement===cb) return;
+      var v = !!store[cb.id]; cb.checked = v;
+      var card=cb.closest(".card"); if(card) card.classList.toggle("checked", v);
+    });
+    document.querySelectorAll("[data-k]").forEach(function(i){
+      if(document.activeElement===i) return;
+      var k=i.getAttribute("data-k");
+      i.value = store[k]!=null ? store[k] : "";
+    });
+    if(document.activeElement!==memo) memo.value = store.memo || "";
+    if(document.activeElement!==lmpInput) lmpInput.value = store.lmp || "";
+    recalc(); calc();
+  }
+
+  /* ---------- 변경 처리 (로컬 저장 + 클라우드 push) ---------- */
+  function change(key, val){
+    store[key] = val; saveLocal();
+    if(sync.on && !sync.applying) pushRemote(key, val);
+  }
+
+  document.addEventListener("change", function(ev){
+    var cb = ev.target.closest && ev.target.closest(".chk");
+    if(cb){ var card=cb.closest(".card"); if(card) card.classList.toggle("checked", cb.checked); change(cb.id, cb.checked?1:0); }
+  });
+  body.addEventListener("input", function(ev){
+    var i=ev.target; var k=i.getAttribute("data-k"); if(!k) return;
+    var v = i.type==="number" ? (i.value===""?"":+i.value) : i.value;
+    change(k, v); recalc();
+  });
+  memo.addEventListener("input", function(){ change("memo", memo.value); });
+  lmpInput.addEventListener("change", function(){ change("lmp", lmpInput.value); calc(); });
+
+  /* 탭 필터 */
+  var benTabs=document.getElementById("benTabs");
+  benTabs.addEventListener("click", function(ev){
+    var t = ev.target.closest(".tab"); if(!t) return;
+    benTabs.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected","false"); });
+    t.setAttribute("aria-selected","true");
+    var f = t.getAttribute("data-f");
+    benCards.querySelectorAll(".card").forEach(function(card){
+      card.classList.toggle("hidden", !(f==="all" || card.getAttribute("data-ph")===f));
+    });
+  });
 
   /* ---------- 테마 ---------- */
   var themeBtn=document.getElementById("themeBtn");
@@ -565,15 +605,127 @@
     var cur=document.documentElement.getAttribute("data-theme");
     var next = cur==="dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
-    store.theme=next; save();
+    store.theme=next; saveLocal();
   });
 
   /* ---------- 초기화 ---------- */
   document.getElementById("resetBtn").addEventListener("click", function(){
-    if(confirm("모든 체크·예산·메모를 초기화할까요? 되돌릴 수 없어요.")){
-      LS.removeItem(KEY); location.reload();
+    if(confirm("모든 체크·예산·메모를 초기화할까요? 되돌릴 수 없어요."+(sync.on?"\n(클라우드 방의 내용도 함께 비워집니다)":""))){
+      var theme=store.theme;
+      if(sync.on && sync.ref){ try{ sync.setDoc(sync.ref, {state:{}}); }catch(e){} }
+      store={}; if(theme) store.theme=theme; saveLocal();
+      location.reload();
     }
   });
+
+  /* ================= 클라우드 동기화 (Firebase) ================= */
+  var sync = { on:false, ref:null, setDoc:null, applying:false, pending:{}, timer:null };
+  var syncPill=document.getElementById("syncPill"), syncTxt=document.getElementById("syncTxt");
+  function setPill(state, txt){
+    syncPill.className = "syncpill" + (state?(" "+state):"");
+    syncTxt.textContent = txt;
+  }
+  function pushRemote(key, val){
+    sync.pending["state."+key] = val;
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(flushRemote, 350);
+  }
+  function flushRemote(){
+    if(!sync.on || !sync.ref) return;
+    var payload={}; Object.keys(sync.pending).forEach(function(dotKey){
+      // dotKey = "state.<k>" → nested object for merge
+      payload.state = payload.state || {};
+      payload.state[dotKey.slice(6)] = sync.pending[dotKey];
+    });
+    sync.pending={};
+    try{ sync.setDoc(sync.ref, payload, {merge:true}); }catch(e){}
+  }
+
+  async function connectSync(cfg, room, seed){
+    setPill("", "연결 중…");
+    var appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    var authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    var fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    var app = appMod.initializeApp(cfg, "babybong-"+Date.now());
+    var auth = authMod.getAuth(app);
+    await authMod.signInAnonymously(auth);
+    var db = fsMod.getFirestore(app);
+    var ref = fsMod.doc(db, "rooms", room);
+    sync.ref = ref; sync.setDoc = fsMod.setDoc; sync.on = true;
+
+    // 최초 연결: 원격이 비어 있으면 현재 로컬 데이터로 방 시딩
+    if(seed){
+      var snap = await fsMod.getDoc(ref);
+      if(!snap.exists() || !snap.data() || !snap.data().state){
+        var initState = {}; Object.keys(store).forEach(function(k){ if(k!=="theme") initState[k]=store[k]; });
+        await fsMod.setDoc(ref, {state:initState, updatedAt:Date.now()}, {merge:true});
+      }
+    }
+    fsMod.onSnapshot(ref, function(snap){
+      var data = snap.data();
+      if(data && data.state){
+        sync.applying = true;
+        Object.keys(data.state).forEach(function(k){ store[k]=data.state[k]; });
+        saveLocal(); applyStore();
+        sync.applying = false;
+      }
+      setPill("on", "동기화 켜짐");
+    }, function(err){ setPill("err", "동기화 오류"); });
+
+    setPill("on", "동기화 켜짐");
+    document.getElementById("storageNote").innerHTML = "☁️ <b>클라우드 동기화 켜짐</b> — 남편과 같은 설정·방 이름으로 접속하면 실시간으로 함께 관리됩니다.";
+  }
+
+  /* 동기화 모달 */
+  var overlay=document.getElementById("syncOverlay");
+  var cfgInput=document.getElementById("cfgInput"), roomInput=document.getElementById("roomInput");
+  var syncMsg=document.getElementById("syncMsg");
+  function showMsg(txt, ok){ syncMsg.textContent=txt; syncMsg.className="msg show "+(ok?"ok":"bad"); }
+  function openModal(){
+    overlay.classList.add("open");
+    if(store._room) roomInput.value = store._room;
+    if(store._cfg) cfgInput.value = store._cfg;
+    document.getElementById("syncDisconnect").style.display = sync.on ? "inline-flex" : "none";
+  }
+  function closeModal(){ overlay.classList.remove("open"); syncMsg.className="msg"; }
+  document.getElementById("syncBtn").addEventListener("click", openModal);
+  document.getElementById("syncCancel").addEventListener("click", closeModal);
+  overlay.addEventListener("click", function(e){ if(e.target===overlay) closeModal(); });
+
+  function parseCfg(text){
+    text=(text||"").trim();
+    // "const firebaseConfig =" 같은 접두어 제거, 세미콜론 제거
+    var m = text.match(/\{[\s\S]*\}/); if(m) text=m[0];
+    try{ return JSON.parse(text); }catch(e){}
+    try{ return (new Function("return ("+text+")"))(); }catch(e){}
+    return null;
+  }
+  document.getElementById("syncConnect").addEventListener("click", async function(){
+    var cfg = parseCfg(cfgInput.value);
+    var room = (roomInput.value||"").trim();
+    if(!cfg || !cfg.apiKey || !cfg.projectId){ showMsg("Firebase 설정을 인식하지 못했어요. config 객체 { … } 전체를 붙여넣었는지 확인해 주세요.", false); return; }
+    if(room.length < 6){ showMsg("방 이름은 추측하기 어렵게 6자 이상으로 정해 주세요.", false); return; }
+    try{
+      await connectSync(cfg, room, true);
+      store._cfg = cfgInput.value.trim(); store._room = room; saveLocal();
+      showMsg("연결 완료! 남편에게 이 페이지 주소와 같은 설정·방 이름을 알려주세요.", true);
+      setTimeout(closeModal, 1400);
+    }catch(e){
+      showMsg("연결 실패: "+(e && e.message ? e.message : e)+" — Firestore/익명 로그인 사용 설정과 설정값을 확인해 주세요.", false);
+      setPill("err", "동기화 오류");
+    }
+  });
+  document.getElementById("syncDisconnect").addEventListener("click", function(){
+    delete store._cfg; delete store._room; saveLocal();
+    location.reload();
+  });
+
+  /* ---------- 초기 표시 + 자동 재연결 ---------- */
+  applyStore();
+  if(store._cfg && store._room){
+    var c = parseCfg(store._cfg);
+    if(c){ connectSync(c, store._room, false).catch(function(e){ setPill("err","동기화 오류"); }); }
+  }
 })();
 </script>
 </body>
